@@ -1,0 +1,18 @@
+{
+    "name": "data-head/interfaz-framework",
+    "description": "A web development framework written in modern PHP",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Chandler Van Scoy",
+            "email": "chandler@chandlervanscoy.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "DataHead\\InterfazFramework\\": "./src"
+        }
+    }
+}
