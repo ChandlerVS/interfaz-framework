@@ -8,17 +8,22 @@ use Laminas\Diactoros\ServerRequest;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 use League\Container\Container;
 use League\Route\Router;
+use Twig\Loader\FilesystemLoader;
 
 class Framework
 {
     static $instance = null;
 
     public $container;
+    public $viewFolders;
 
     public function __construct()
     {
         $this->container = new Container();
-        $this->container->addServiceProvider(FrameworkServiceProvider::class);
+    }
+
+    public function init() {
+
     }
 
     public function run() {

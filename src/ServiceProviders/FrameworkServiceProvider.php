@@ -4,18 +4,25 @@
 namespace DataHead\InterfazFramework\ServiceProviders;
 
 
+use DataHead\InterfazFramework\Framework;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequest;
 use Laminas\Diactoros\ServerRequestFactory;
 use League\Container\ServiceProvider\AbstractServiceProvider;
 use League\Container\ServiceProvider\BootableServiceProviderInterface;
 use League\Route\Router;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
+use Twig\Loader\LoaderInterface;
 
 class FrameworkServiceProvider extends AbstractServiceProvider implements BootableServiceProviderInterface
 {
 
     protected $provides = [
-        Router::class
+        Router::class,
+        ServerRequest::class,
+        LoaderInterface::class,
+        Environment::class,
     ];
 
     /**
@@ -23,8 +30,13 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
      */
     public function register()
     {
-        /** @noinspection PhpUndefinedMethodInspection */
-        $this->getContainer()->add(Router::class)->setShared();
+        $this->getLeagueContainer()->share(Router::class);
+
+        /** Add the views loader for Twig */
+        $this->getLeagueContainer()->share(LoaderInterface::class, function() {
+            return new FilesystemLoader(Framework::getInstance()->viewFolders);
+        });
+        $this->getLeagueContainer()->add(Environment::class)->addArgument(LoaderInterface::class);
     }
 
     /**
