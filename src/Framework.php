@@ -39,4 +39,18 @@ class Framework
         }
         return self::$instance;
     }
+
+    /**
+     * @param $routes
+     * Adds routes into the system from a given array
+     */
+    public function processRoutes($routes) {
+        /** @var Router $router */
+        $router = $this->container->get(Router::class);
+
+        foreach ($routes as $route) {
+            /** 0: Method | 1: The Route | 2: The Controller Method */
+            $router->map($route[0], $route[1], $route[2]);
+        }
+    }
 }
