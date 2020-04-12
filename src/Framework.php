@@ -15,6 +15,8 @@ class Framework
 {
     static $instance = null;
 
+    public $environment;
+
     public $container;
     public $viewFolders;
     public $baseDir;
@@ -28,6 +30,7 @@ class Framework
     {
         $dotenv = Dotenv::createImmutable($baseDir);
         $dotenv->load();
+        $this->environment = $this->getenv("ENVIRONMENT", "local");
 
         $this->container = new Container();
     }
@@ -66,5 +69,20 @@ class Framework
             /** 0: Method | 1: The Route | 2: The Controller Method */
             $router->map($route[0], $route[1], $route[2]);
         }
+    }
+
+    /**
+     * @param $varName
+     * @param null $default
+     * @return array|false|string|null
+     * Gets and ENV variable and returns a default variable if it is not found
+     */
+    public function getenv($varName, $default=null) {
+        $result = getenv($varName);
+
+        if($result)
+            return $result;
+        else
+            return $default;
     }
 }
