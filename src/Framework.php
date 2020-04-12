@@ -21,6 +21,8 @@ class Framework
     public $viewFolders;
     public $baseDir;
 
+    public $doctrineSettings = [];
+
     /**
      * Framework constructor.
      * @param $baseDir string
@@ -32,7 +34,21 @@ class Framework
         $dotenv->load();
         $this->environment = $this->getenv("ENVIRONMENT", "local");
 
+        /** Set development mode of doctrine to true if the environment is local */
+        $this->doctrineSettings['dev_mode'] = $this->environment == 'local' ? true : false;
+
+        $cache = $this->getenv('DOCTRINE_CACHE', null);
+        $this->doctrineSettings['cache'] = $cache != "null" ? $cache : null;
+
         $this->container = new Container();
+
+        $this->container->share(Framework::class, function() {
+            return Framework::getInstance();
+        });
+    }
+
+    public function setDoctrinePaths(array $paths): void {
+        $this->doctrineSettings['paths'] = $paths;
     }
 
     /**

@@ -5,6 +5,9 @@ namespace DataHead\InterfazFramework\ServiceProviders;
 
 
 use DataHead\InterfazFramework\Framework;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\Setup;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequest;
 use Laminas\Diactoros\ServerRequestFactory;
@@ -23,6 +26,8 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
         ServerRequest::class,
         LoaderInterface::class,
         Environment::class,
+        Configuration::class,
+        EntityManager::class
     ];
 
     /**
@@ -44,8 +49,29 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
      */
     public function boot()
     {
-        $this->getContainer()->add(ServerRequest::class, function() {
-            return ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
+        if(php_sapi_name() !== 'cli') {
+            $this->getContainer()->add(ServerRequest::class, function() {
+                return ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
+            });
+        }
+
+        $this->getLeagueContainer()->share(Configuration::class, function() {
+            /** @var Framework $framework */
+            $framework = $this->getLeagueContainer()->get(Framework::class);
+            return Setup::createAnnotationMetadataConfiguration($framework->doctrineSettings['paths'], $framework->doctrineSettings['dev_mode'], null, $framework->doctrineSettings['cache'], false);
+        });
+        $this->getLeagueContainer()->share(EntityManager::class, function() {
+            /** @var Framework $framework */
+            $framework = $this->getLeagueContainer()->get(Framework::class);
+            $configuration = $this->getLeagueContainer()->get(Configuration::class);
+            $conn = [
+                'driver' => $framework->getenv('DOCTRINE_DRIVER', 'pdo_mysql'),
+                'user' => $framework->getenv('DOCTRINE_DBUSER', 'root'),
+                'password' => $framework->getenv('DOCTRINE_DBPASSWORD', ''),
+                'host' => $framework->getenv('DOCTRINE_DBHOST', 'localhost'),
+                'dbname' => $framework->getenv('DOCTRINE_DBNAME', 'interfaz')
+            ];
+            return EntityManager::create($conn, $configuration);
         });
     }
 }
