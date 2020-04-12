@@ -14,6 +14,7 @@ use Laminas\Diactoros\ServerRequestFactory;
 use League\Container\ServiceProvider\AbstractServiceProvider;
 use League\Container\ServiceProvider\BootableServiceProviderInterface;
 use League\Route\Router;
+use Symfony\Component\Console\Application;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\Loader\LoaderInterface;
@@ -53,6 +54,8 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
             $this->getContainer()->add(ServerRequest::class, function() {
                 return ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
             });
+        } else {
+            $this->bootCli();
         }
 
         $this->getLeagueContainer()->share(Configuration::class, function() {
@@ -73,5 +76,9 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
             ];
             return EntityManager::create($conn, $configuration);
         });
+    }
+
+    protected function bootCli() {
+        $this->getLeagueContainer()->share(Application::class);
     }
 }
