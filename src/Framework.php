@@ -4,6 +4,7 @@ namespace DataHead\InterfazFramework;
 
 
 use DataHead\InterfazFramework\ServiceProviders\FrameworkServiceProvider;
+use Dotenv\Dotenv;
 use Laminas\Diactoros\ServerRequest;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 use League\Container\Container;
@@ -16,26 +17,39 @@ class Framework
 
     public $container;
     public $viewFolders;
+    public $baseDir;
 
-    public function __construct()
+    /**
+     * Framework constructor.
+     * @param $baseDir string
+     * The base directory is only required on the first request of the instance
+     */
+    public function __construct($baseDir)
     {
+        $dotenv = Dotenv::createImmutable($baseDir);
+        $dotenv->load();
+
         $this->container = new Container();
     }
 
-    public function init() {
-
-    }
-
-    public function run() {
+    /**
+     * Get the router, process the request and return the response
+     */
+    public function run(): void {
         /** @var Router $router */
         $router = $this->container->get(Router::class);
         $response = $router->dispatch($this->container->get(ServerRequest::class));
         (new SapiEmitter())->emit($response);
     }
 
-    static function getInstance(): Framework {
+    /**
+     * @param null $baseDir
+     * @return Framework
+     * The base directory is only required on the first request of the instance
+     */
+    static function getInstance($baseDir = null): Framework {
         if(self::$instance == null) {
-            self::$instance = new Framework();
+            self::$instance = new Framework($baseDir);
         }
         return self::$instance;
     }
