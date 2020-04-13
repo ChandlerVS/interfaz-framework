@@ -38,6 +38,6 @@ class SessionMiddleware implements MiddlewareInterface
         $domain = Framework::getInstance()->getenv('DOMAIN');
 
         $response = $handler->handle($request);
-        return $response->withAddedHeader('Set-Cookie', "session_token=$sessionManager->sessionID; SameSite=Strict; Domain=$domain");
+        return $response->withAddedHeader('Set-Cookie', "session_token=$sessionManager->sessionID; SameSite=Strict; Domain=$domain; Path=/; SameSite=None");
     }
 }
