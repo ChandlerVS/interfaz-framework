@@ -3,13 +3,16 @@
 
 namespace DataHead\InterfazFramework\ServiceProviders;
 
+use DataHead\InterfazFramework\AuthenticationManager;
 use DataHead\InterfazFramework\Controller;
 use DataHead\InterfazFramework\Framework;
+use DataHead\InterfazFramework\Middleware\AuthenticationMiddleware;
 use DataHead\InterfazFramework\Session\FileSystemSessionManager;
 use DataHead\InterfazFramework\Session\SessionManager;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Setup;
+use Franzl\Middleware\Whoops\WhoopsMiddleware;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequest;
 use Laminas\Diactoros\ServerRequestFactory;
@@ -33,7 +36,8 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
         Environment::class,
         Configuration::class,
         EntityManager::class,
-        Controller::class
+        Controller::class,
+        AuthenticationManager::class
     ];
 
     /**
@@ -46,6 +50,7 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
             return new FilesystemLoader(Framework::getInstance()->viewFolders);
         });
         $this->getLeagueContainer()->add(Environment::class)->addArgument(LoaderInterface::class);
+        $this->getLeagueContainer()->share(AuthenticationManager::class)->addArgument(SessionManager::class);
     }
 
     /**
@@ -101,6 +106,10 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
     protected function baseMiddleware() {
         /** @var Router $router */
         $router = $this->getLeagueContainer()->get(Router::class);
-        $router->middleware(new SessionMiddleware());
+        $router->middlewares([
+            new WhoopsMiddleware(),
+            new SessionMiddleware(),
+            new AuthenticationMiddleware()
+        ]);
     }
 }

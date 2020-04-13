@@ -20,6 +20,7 @@
         "symfony/console": "^5.0.7",
         "hansott/psr7-cookies": "^3.0.0",
         "ramsey/uuid": "^4.0.1",
+        "franzl/whoops-middleware": "^1.2.0",
         "ext-json": "*"
     },
     "autoload": {
