@@ -3,8 +3,10 @@
 
 namespace DataHead\InterfazFramework\ServiceProviders;
 
-
+use DataHead\InterfazFramework\Controller;
 use DataHead\InterfazFramework\Framework;
+use DataHead\InterfazFramework\Session\FileSystemSessionManager;
+use DataHead\InterfazFramework\Session\SessionManager;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Setup;
@@ -14,6 +16,8 @@ use Laminas\Diactoros\ServerRequestFactory;
 use League\Container\ServiceProvider\AbstractServiceProvider;
 use League\Container\ServiceProvider\BootableServiceProviderInterface;
 use League\Route\Router;
+use DataHead\InterfazFramework\Middleware\SessionMiddleware;
+use League\Route\Strategy\ApplicationStrategy;
 use Symfony\Component\Console\Application;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -28,7 +32,8 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
         LoaderInterface::class,
         Environment::class,
         Configuration::class,
-        EntityManager::class
+        EntityManager::class,
+        Controller::class
     ];
 
     /**
@@ -36,8 +41,6 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
      */
     public function register()
     {
-        $this->getLeagueContainer()->share(Router::class);
-
         /** Add the views loader for Twig */
         $this->getLeagueContainer()->share(LoaderInterface::class, function() {
             return new FilesystemLoader(Framework::getInstance()->viewFolders);
@@ -50,6 +53,13 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
      */
     public function boot()
     {
+        $this->getLeagueContainer()->share(ApplicationStrategy::class, function() {
+            return (new ApplicationStrategy)->setContainer(Framework::getInstance()->container);
+        });
+        $this->getLeagueContainer()->share(Router::class, function() {
+            return (new Router)->setStrategy($this->getLeagueContainer()->get(ApplicationStrategy::class));
+        });
+
         if(php_sapi_name() !== 'cli') {
             $this->getContainer()->add(ServerRequest::class, function() {
                 return ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
@@ -76,9 +86,21 @@ class FrameworkServiceProvider extends AbstractServiceProvider implements Bootab
             ];
             return EntityManager::create($conn, $configuration);
         });
+
+        $this->getLeagueContainer()->share(SessionManager::class, function() {
+            return new FileSystemSessionManager();
+        });
+
+        $this->baseMiddleware();
     }
 
     protected function bootCli() {
         $this->getLeagueContainer()->share(Application::class);
+    }
+
+    protected function baseMiddleware() {
+        /** @var Router $router */
+        $router = $this->getLeagueContainer()->get(Router::class);
+        $router->middleware(new SessionMiddleware());
     }
 }
